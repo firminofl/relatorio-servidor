@@ -1,0 +1,59 @@
+html,
+body {
+    background-color: #ecf0f5
+}
+
+.nav-link,
+.navbar-brand {
+    background-color: inherit;
+    color: rgb(255, 255, 255) !important;
+}
+
+.card {
+    margin: 20px;
+}
+
+a:hover {
+    color: rgb(207, 207, 207) !important;
+}
+
+.page-header {
+    background: #007FFF;
+}
+
+.card-conteiner {
+    margin: 1em;
+}
+
+.place-info-box {
+    color: #555;
+    display: block;
+    min-height: 120px;
+    background: #fff;
+    width: 100%;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+    margin-bottom: 15px;
+}
+
+.footer {
+    bottom: 0;
+    width: 100%;
+    margin-top: 1em;
+    padding: 0.5em;
+    background-color: white;
+    color: #555;
+    text-align: center;
+    position: float;
+    font-size: 1em;
+    z-index: 1030;
+}
+
+label {
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.delete-button {
+    width: 0.8em;
+}
