@@ -79,6 +79,27 @@ async function getAgeInterval(startInterval, endInterval) {
     }
 }
 
+async function age(startDate, endDate) {
+    try {
+        const query = `SELECT AGE('${endDate}','${startDate}') :: text as interval;`
+
+        return await pg.queryAsync(query)
+    } catch (error) {
+        throw new Error('4.1. Erro ao buscar as informações na base de dados!')
+    }
+}
+
+async function sumInterval(startInterval, endInterval) {
+    try {
+        const query = `SELECT (INTERVAL'${startInterval}' + INTERVAL'${endInterval}') ::text as interval;`
+
+        return await pg.queryAsync(query)
+    } catch (error) {
+        console.log(error)
+        throw new Error('5.1. Erro ao buscar as informações na base de dados!')
+    }
+}
+
 async function getSumInterval(startInterval, endInterval) {
     try {
         const query = `SELECT (INTERVAL'${startInterval}' + INTERVAL'${endInterval}') ::text as interval;`
@@ -120,6 +141,18 @@ async function getEpoch(text) {
     }
 }
 
+async function epoch(text) {
+    try {
+
+        const query = `SELECT EXTRACT(epoch FROM INTERVAL'${text}') AS seconds;`
+
+        return await pg.queryAsync(query)
+    } catch (error) {
+        console.log(error)
+        throw new Error('7. Erro ao buscar as informações na base de dados!')
+    }
+}
+
 module.exports = {
     getServerStatus,
     getPoweredServer,
@@ -127,7 +160,11 @@ module.exports = {
     getAgeInterval,
     getSumInterval,
     getIntervalObj,
-    getEpoch
+    getEpoch,
+
+    age,
+    sumInterval,
+    epoch
 }
 
 /*

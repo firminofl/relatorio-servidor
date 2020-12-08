@@ -122,8 +122,6 @@ function downloadCsv() {
 async function addAvailable(data, element, percent) {
     const table = document.querySelector(element)
 
-    // const { years, months, days, hours, minutes, seconds } = getAllKeys(data)
-
     while (table.hasChildNodes())
         table.removeChild(table.firstChild);
 
@@ -143,6 +141,12 @@ async function addAvailable(data, element, percent) {
         mesesCell.appendChild(mesesValue);
         count++;
 
+        // Semanas
+        const semanasCell = newRow.insertCell(count);
+        const semanasValue = document.createTextNode(data.weeks);
+        semanasCell.appendChild(semanasValue);
+        count++;
+
         // Dias
         const diasCell = newRow.insertCell(count);
         const diasValue = document.createTextNode(data.days);
@@ -159,12 +163,6 @@ async function addAvailable(data, element, percent) {
         const minutosCell = newRow.insertCell(count);
         const minutosValue = document.createTextNode(data.minutes);
         minutosCell.appendChild(minutosValue);
-        count++;
-
-        // Segundos
-        const segundosCell = newRow.insertCell(count);
-        const segundosValue = document.createTextNode(data.seconds);
-        segundosCell.appendChild(segundosValue);
         count++;
 
         // Porcentagem

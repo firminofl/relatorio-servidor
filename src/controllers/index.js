@@ -1,4 +1,4 @@
-const { getDataDB, getAgeInterval, getSumInterval, getIntervalObj, getEpoch } = require('../services/index')
+const { getDataDB, getAgeInterval, getSumInterval, getIntervalObj, getEpoch, age, sumInterval, epoch } = require('../services/index')
 const { dateWithHours } = require('../factory/date')
 const { poweredServerConsole, getConnectedServer, getFullInterval, getAllKeys, calcutePercent } = require('../factory/timing')
 
@@ -48,17 +48,21 @@ async function relatorio(req, res) {
             })
         }
 
-        let availability = await calcDispIndisp(data, 'REG', 'NRE')
-        availability = getAllKeys(availability)
+        const { registered, unregistered } = await mapValues(data)
 
-        let unavailability = await calcDispIndisp(data, 'NRE', 'REG')
-        unavailability = getAllKeys(unavailability)
+        const sumRegistered = await sumIntervals(registered)
+        const registeredEpoch = await epoch(sumRegistered)
+        let availability = await calcula(Math.round(parseFloat(registeredEpoch.rows[0]["seconds"])) / 60)
+
+        const sumUnregistered = await sumIntervals(unregistered)
+        const unregisteredEpoch = await epoch(sumUnregistered)
+        let unavailability = await calcula(Math.round(parseFloat(unregisteredEpoch.rows[0]["seconds"])) / 60)
 
         let rangeDate = await getAgeInterval(`${startDate} 00:00:00`, `${endDate} 23:59:59`)
         rangeDate = await getIntervalObj(rangeDate[0].interval)
         rangeDate = getAllKeys(rangeDate[0].interval)
 
-        const percent = await calcPercent(rangeDate, availability, unavailability)
+        const percent = await calcPercent(rangeDate, registeredEpoch.rows, unregisteredEpoch.rows)
 
         const total = {
             dateRange: `${startDate} - ${endDate}`,
@@ -80,12 +84,10 @@ async function relatorio(req, res) {
 
 async function calcPercent(rangeDate, availability, unavailability) {
     const rangeDateText = getFullInterval(rangeDate)
-    const availabilityText = getFullInterval(availability)
-    const unavailabilityText = getFullInterval(unavailability)
 
     const rangeDateEpoch = await getEpoch(rangeDateText)
-    const availabilityEpoch = await getEpoch(availabilityText)
-    const unavailabilityEpoch = await getEpoch(unavailabilityText)
+    const availabilityEpoch = availability
+    const unavailabilityEpoch = unavailability
 
     let percent = {
         total: "100",
@@ -116,83 +118,145 @@ async function connectedServer() {
     return power
 }
 
-async function calcDispIndisp(data, firstCondition, secondCondition) {
-    let getAge = []
-    let getInterval = ''
-    let ageArray = []
-    let buildIntervalJson = []
+async function mapValues(data) {
+    let registered = ['0 days 00:00:00']
+    let unregistered = ['0 days 00:00:00']
 
     if (data.length == 1) {
-        if (data[0].status == firstCondition) {
-            const age = await getAgeInterval(dateWithHours(data[0].data_hora), `${dateWithHours(new Date())}`)
+        const { rowCount, rows } = await age(dateWithHours(data[0].data_hora), `${dateWithHours(new Date())}`)
 
-            if (age.length > 0) {
-                const buildIntervalJson = await getIntervalObj(age[0].interval)
+        if (rowCount == 1) {
+            if (data[0].status == 'REG')
+                registered.push(rows[0]["interval"])
 
-                return buildIntervalJson[0].interval
-            }
+            else if (data[0].status == 'NRE')
+                unregistered.push(rows[0]["interval"])
+        }
 
-        } else {
-            const buildIntervalJson = await getIntervalObj('00:00:00')
-            return buildIntervalJson[0].interval
+        return {
+            registered,
+            unregistered
         }
     }
 
     for (let i = 0, j = 1; i < data.length; i++, j++) {
         if (data[j]) {
+            const { rowCount, rows } = await age(dateWithHours(data[i].data_hora), dateWithHours(data[j].data_hora))
 
-            if ((data[i].status == firstCondition && data[j].status == secondCondition) || (data[i].status == firstCondition && data[j].status == firstCondition)) { // ficou disponível por X tempo
-                // Calcular o interval entre a primeira data de REG e a data de NRE ou REG e REG
-                getAge = await getAgeInterval(dateWithHours(data[i].data_hora), dateWithHours(data[j].data_hora))
+            if (rowCount == 1) {
+                if ((data[i].status == 'REG' && data[j].status == 'NRE') || (data[i].status == 'REG' && data[j].status == 'REG')) // ficou disponível por X tempo
+                    registered.push(rows[0]["interval"])
 
-                // Guardar esta diferença para somar posteriormente
-                if (getAge.length > 0)
-                    ageArray.push(getAge[0].interval)
-                else
-                    ageArray.push('00:00:00')
+                else if ((data[i].status == 'NRE' && data[j].status == 'REG') || (data[i].status == 'NRE' && data[j].status == 'NRE')) // ficou indisponível por X tempo
+                    unregistered.push(rows[0]["interval"])
+
             }
-
         } else {
+            const { rowCount, rows } = await age(dateWithHours(data[data.length - 1].data_hora), `${dateWithHours(new Date())}`)
 
-            if (data[data.length - 1].status == firstCondition) {
-                // Calcular o interval entre REG e a data atual
-                getAge = await getAgeInterval(dateWithHours(data[data.length - 1].data_hora), `${dateWithHours(new Date())}`)
+            if (rowCount == 1) {
+                if (data[data.length - 1].status == 'REG')
+                    registered.push(rows[0]["interval"])
 
-                // Guardar esta diferença para somar posteriormente
-                if (getAge.length > 0)
-                    ageArray.push(getAge[0].interval)
-                else
-                    ageArray.push('00:00:00')
-            } else {
-                ageArray.push('00:00:00')
+                else if (data[data.length - 1].status == 'NRE')
+                    unregistered.push(rows[0]["interval"])
             }
         }
     }
 
-    if (ageArray.length > 0) {
-        getInterval = await getSumInterval('0 days', ageArray[0])
+    return {
+        registered,
+        unregistered
+    }
+}
 
-        let i = 1
+async function sumIntervals(array) {
+    let localSum = '0 days 00:00:00'
 
-        if (getInterval.length > 0) {
+    if (array.length > 0) {
+        const { rowCount, rows } = await sumInterval(localSum, array[0])
 
-            getInterval = getInterval[0].interval
-            while (i < ageArray.length) {
-                if (typeof getInterval == 'object')
-                    getInterval = await getSumInterval(getInterval[0].interval, ageArray[i])
+        localSum = rows[0]["interval"]
+
+        if (rowCount == 1) {
+            for (let i = 1; i < array.length; i++) {
+                const { rowCount, rows } = await sumInterval(localSum, array[i])
+
+                if (rowCount == 1)
+                    localSum = rows[0]["interval"]
                 else
-                    getInterval = await getSumInterval(getInterval, ageArray[i])
-
-                i++
+                    localSum = '0 days 00:00:00'
             }
         }
+    }
 
-        if (typeof getInterval == 'object')
-            buildIntervalJson = await getIntervalObj(getInterval[0].interval)
-        else
-            buildIntervalJson = await getIntervalObj(getInterval)
+    return localSum
+}
 
-        return buildIntervalJson[0].interval
+async function calcula(valorInicio) {
+    //primeiro criei constantes para armazenar os valores dos tempos em MINUTOS.
+    const horas = 60; //minuto * 60
+    const dias = 1440; //hora * 24
+    const semanas = 10080; //dias * 7
+    const meses = 302400; //semanas * 4
+    const anos = 3628800; //meses * 12
+
+    // Variaveis para manipulação
+    let ano = 0
+    let mes = 0
+    let semana = 0
+    let dia = 0
+    let hora = 0
+    let minuto = 0
+
+    if (valorInicio > anos) { //verifica se é maior que um ano
+        ano = Math.floor(valorInicio / anos); //cria a variável ano e armazena a quantidade de anos nela
+        valorInicio = valorInicio - (anos * ano); //atualiza o valorInicio
+    } else {
+        ano = 0; //se for menor que um ano, cria a variável ano e deixa zerada
+    }
+
+    //faz o mesmo para os meses
+    if (valorInicio > meses) {
+        mes = Math.floor(valorInicio / meses);
+        valorInicio = valorInicio - (meses * mes);
+    } else {
+        mes = 0;
+    }
+
+    //faz o mesmo para as semanas
+    if (valorInicio > semanas) {
+        semana = Math.floor(valorInicio / semanas);
+        valorInicio = valorInicio - (semanas * semana);
+    } else {
+        semana = 0;
+    }
+
+    //faz o mesmo para os dias
+    if (valorInicio > dias) {
+        dia = Math.floor(valorInicio / dias);
+        valorInicio = valorInicio - (dias * dia);
+    } else {
+        dia = 0;
+    }
+
+    //faz o mesmo para os horas
+    if (valorInicio > horas) {
+        hora = Math.floor(valorInicio / horas);
+        valorInicio = valorInicio - (horas * hora);
+    } else {
+        hora = 0;
+    }
+
+    minuto = Math.floor(valorInicio); //o que sobra são minutos
+
+    return {
+        years: ano,
+        months: mes,
+        weeks: semana,
+        days: dia,
+        hours: hora,
+        minutes: minuto
     }
 }
 
