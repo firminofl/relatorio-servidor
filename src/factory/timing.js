@@ -64,10 +64,78 @@ const getAllKeys = (data) => {
     return fullDate
 }
 
+const getTimes = (value) => {
+    //primeiro criei constantes para armazenar os valores dos tempos em MINUTOS.
+    const horas = 60; //minuto * 60
+    const dias = 1440; //hora * 24
+    const semanas = 10080; //dias * 7
+    const meses = 302400; //semanas * 4
+    const anos = 3628800; //meses * 12
+
+    // Variaveis para manipulação
+    let year = 0
+    let month = 0
+    let week = 0
+    let day = 0
+    let hour = 0
+    let minute = 0
+
+    if (value > anos) { //verifica se é maior que um ano
+        year = Math.floor(value / anos); //cria a variável ano e armazena a quantidade de anos nela
+        value = value - (anos * year); //atualiza o value
+    } else {
+        year = 0; //se for menor que um ano, cria a variável ano e deixa zerada
+    }
+
+    //faz o mesmo para os meses
+    if (value > meses) {
+        month = Math.floor(value / meses);
+        value = value - (meses * month);
+    } else {
+        month = 0;
+    }
+
+    //faz o mesmo para as semanas
+    if (value > semanas) {
+        week = Math.floor(value / semanas);
+        value = value - (semanas * week);
+    } else {
+        week = 0;
+    }
+
+    //faz o mesmo para os dias
+    if (value > dias) {
+        day = Math.floor(value / dias);
+        value = value - (dias * day);
+    } else {
+        day = 0;
+    }
+
+    //faz o mesmo para os horas
+    if (value > horas) {
+        hour = Math.floor(value / horas);
+        value = value - (horas * hour);
+    } else {
+        hour = 0;
+    }
+
+    minute = Math.floor(value); //o que sobra são minutos
+
+    return {
+        years: year,
+        months: month,
+        weeks: week,
+        days: day,
+        hours: hour,
+        minutes: minute
+    }
+}
+
 module.exports = {
     poweredServerConsole,
     getConnectedServer,
     getFullInterval,
     getAllKeys,
-    calcutePercent
+    calcutePercent,
+    getTimes
 }

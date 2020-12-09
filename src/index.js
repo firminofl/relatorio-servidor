@@ -5,7 +5,6 @@ require('dotenv').config()
 
 const app = express()
 
-// const TIME = 3600000 // intervalo de 1h
 const TIME = 60000 // intervalo de 1 minutos
 const REGISTRYHOUR = '00:01'
 

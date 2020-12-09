@@ -1,55 +1,5 @@
 const pg = require('../db/index')
 
-async function getServerStatus(startDate, endDate) {
-    try {
-        const query = `SELECT 
-        (SELECT COUNT(*) as total_diario FROM status s 
-        WHERE s.data_hora::date BETWEEN '${startDate}' 
-        AND '${endDate}') as total_horas,
-
-        (SELECT COUNT(*) as registrado FROM status as s 
-        WHERE s.status = 'REG' 
-        AND s.data_hora::date BETWEEN '${startDate}' 
-        AND '${endDate}') as Registrado,
-
-        (SELECT COUNT(*) as n_registrado FROM status as s 
-        WHERE s.status <> 'REG' 
-        AND s.data_hora::date BETWEEN '${startDate}' 
-        AND '${endDate}') as N_Registrado
-
-        FROM status as s 
-        WHERE s.data_hora::date BETWEEN '${startDate}' 
-        AND '${endDate}' 
-        ORDER BY COUNT(*) ASC;`
-
-        const { rows } = await pg.queryAsync(query)
-        return rows
-    } catch (error) {
-        throw new Error('1. Erro ao buscar as informações na base de dados!')
-    }
-}
-
-async function getPoweredServer(startDate, endDate) {
-    try {
-        const query = `SELECT 
-        (SELECT COUNT(*) as total_diario FROM status s) as total_horas,
-
-        (SELECT COUNT(*) as registrado FROM status as s 
-        WHERE s.status = 'REG') as Registrado,
-
-        (SELECT COUNT(*) as n_registrado FROM status as s 
-        WHERE s.status <> 'REG') as N_Registrado
-
-        FROM status as s 
-        ORDER BY COUNT(*) ASC;`
-
-        const { rows } = await pg.queryAsync(query)
-        return rows
-    } catch (error) {
-        throw new Error('2. Erro ao buscar as informações na base de dados!')
-    }
-}
-
 async function getDataDB(startDate, endDate) {
     try {
         const query = `SELECT status, data_hora FROM 
@@ -63,53 +13,7 @@ async function getDataDB(startDate, endDate) {
         return rows
 
     } catch (error) {
-        throw new Error('3. Erro ao buscar as informações na base de dados!')
-    }
-}
-
-async function getAgeInterval(startInterval, endInterval) {
-    try {
-        const query = `SELECT AGE('${endInterval}','${startInterval}') :: text as interval;`
-
-        const { rows } = await pg.queryAsync(query)
-        return rows
-
-    } catch (error) {
-        throw new Error('4. Erro ao buscar as informações na base de dados!')
-    }
-}
-
-async function age(startDate, endDate) {
-    try {
-        const query = `SELECT AGE('${endDate}','${startDate}') :: text as interval;`
-
-        return await pg.queryAsync(query)
-    } catch (error) {
-        throw new Error('4.1. Erro ao buscar as informações na base de dados!')
-    }
-}
-
-async function sumInterval(startInterval, endInterval) {
-    try {
-        const query = `SELECT (INTERVAL'${startInterval}' + INTERVAL'${endInterval}') ::text as interval;`
-
-        return await pg.queryAsync(query)
-    } catch (error) {
-        console.log(error)
-        throw new Error('5.1. Erro ao buscar as informações na base de dados!')
-    }
-}
-
-async function getSumInterval(startInterval, endInterval) {
-    try {
-        const query = `SELECT (INTERVAL'${startInterval}' + INTERVAL'${endInterval}') ::text as interval;`
-
-        const { rows } = await pg.queryAsync(query)
-        return rows
-
-    } catch (error) {
-        console.log(error)
-        throw new Error('5. Erro ao buscar as informações na base de dados!')
+        throw new Error('1. Erro ao buscar as informações na base de dados!')
     }
 }
 
@@ -123,21 +27,28 @@ async function getIntervalObj(date) {
 
     } catch (error) {
         console.log(error)
-        throw new Error('6. Erro ao buscar as informações na base de dados!')
+        throw new Error('2. Erro ao buscar as informações na base de dados!')
     }
 }
 
-async function getEpoch(text) {
+async function age(startDate, endDate) {
     try {
+        const query = `SELECT AGE('${endDate}','${startDate}') :: text as interval;`
 
-        const query = `SELECT EXTRACT(epoch FROM INTERVAL'${text}') AS seconds;`
+        return await pg.queryAsync(query)
+    } catch (error) {
+        throw new Error('3. Erro ao buscar as informações na base de dados!')
+    }
+}
 
-        const { rows } = await pg.queryAsync(query)
-        return rows
+async function sumInterval(startInterval, endInterval) {
+    try {
+        const query = `SELECT (INTERVAL'${startInterval}' + INTERVAL'${endInterval}') ::text as interval;`
 
+        return await pg.queryAsync(query)
     } catch (error) {
         console.log(error)
-        throw new Error('7. Erro ao buscar as informações na base de dados!')
+        throw new Error('4. Erro ao buscar as informações na base de dados!')
     }
 }
 
@@ -149,18 +60,13 @@ async function epoch(text) {
         return await pg.queryAsync(query)
     } catch (error) {
         console.log(error)
-        throw new Error('7. Erro ao buscar as informações na base de dados!')
+        throw new Error('5. Erro ao buscar as informações na base de dados!')
     }
 }
 
 module.exports = {
-    getServerStatus,
-    getPoweredServer,
     getDataDB,
-    getAgeInterval,
-    getSumInterval,
     getIntervalObj,
-    getEpoch,
 
     age,
     sumInterval,
