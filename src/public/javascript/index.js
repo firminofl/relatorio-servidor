@@ -1,4 +1,8 @@
 $(document).ready(function() {
+    initFilter()
+});
+
+function initFilter() {
     const now = new Date();
     let month = (now.getMonth() + 1);
     let day = now.getDate();
@@ -13,7 +17,7 @@ $(document).ready(function() {
 
     $('#startDate').val(today);
     $('#endDate').val(today)
-});
+}
 
 async function serverOn() {
     axios.get(`http://${window.location.hostname}:3003/server`)
@@ -60,7 +64,6 @@ async function getReport() {
                 document.getElementById('containerDataStorage').removeAttribute('hidden')
                 document.getElementById('btnExportCsv').removeAttribute('hidden')
 
-                console.log(data)
                 addTable(data.report.availability, '#tableAvailable tbody', data.percent.availability + '%')
                 addTable(data.report.unavailability, '#tableUnavailable tbody', data.percent.unavailability + '%')
                 addTableData(data.storage, '#tableDataStorage tbody')
@@ -257,6 +260,9 @@ function getAllKeys(data) {
 }
 
 function clean() {
-    startDate.value = ''
-    endDate.value = ''
+    initFilter()
+    document.getElementById('containerAvailable').setAttribute('hidden', 'true')
+    document.getElementById('containerUnavailable').setAttribute('hidden', 'true')
+    document.getElementById('containerDataStorage').setAttribute('hidden', 'true')
+    document.getElementById('btnExportCsv').setAttribute('hidden', 'true')
 }
