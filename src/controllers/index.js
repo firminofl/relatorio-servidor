@@ -87,7 +87,8 @@ async function relatorio(req, res) {
                 availability,
                 unavailability
             },
-            percent
+            percent,
+            storage: data
         }
 
         return res.status(200).send(total)

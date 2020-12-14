@@ -57,11 +57,13 @@ async function getReport() {
             if (data) {
                 document.getElementById('containerAvailable').removeAttribute('hidden')
                 document.getElementById('containerUnavailable').removeAttribute('hidden')
+                document.getElementById('containerDataStorage').removeAttribute('hidden')
                 document.getElementById('btnExportCsv').removeAttribute('hidden')
 
-                addAvailable(data.report.availability, '#tableAvailable tbody', data.percent.availability + '%')
-                addAvailable(data.report.unavailability, '#tableUnavailable tbody', data.percent.unavailability + '%')
-
+                console.log(data)
+                addTable(data.report.availability, '#tableAvailable tbody', data.percent.availability + '%')
+                addTable(data.report.unavailability, '#tableUnavailable tbody', data.percent.unavailability + '%')
+                addTableData(data.storage, '#tableDataStorage tbody')
             } else
                 alert('Não há dados no período informado!')
 
@@ -73,7 +75,7 @@ async function getReport() {
 
 function downloadCsv() {
     const separator = ','
-    const tables = ['tableAvailable', 'tableUnavailable']
+    const tables = ['tableAvailable', 'tableUnavailable', 'tableDataStorage']
     const titleCsv = ['Disponibilidade da ura:', 'Indisponibilidade da ura:']
 
     let csv = [];
@@ -119,7 +121,7 @@ function downloadCsv() {
     document.body.removeChild(link);
 }
 
-async function addAvailable(data, element, percent) {
+async function addTable(data, element, percent) {
     const table = document.querySelector(element)
 
     while (table.hasChildNodes())
@@ -172,6 +174,37 @@ async function addAvailable(data, element, percent) {
         count++;
     }
 
+}
+
+function addTableData(data, element) {
+    const table = document.querySelector(element)
+
+    while (table.hasChildNodes())
+        table.removeChild(table.firstChild);
+
+    for (var i = 0; i < data.length; i++) {
+        let newRow = table.insertRow(i);
+        let count = 0;
+
+        // status
+        const statusCell = newRow.insertCell(count);
+        const statusValue = document.createTextNode(data[i].status == 'REG' ? 'REGISTRADO' : 'NÃO REGISTRADO');
+        statusCell.appendChild(statusValue);
+        count++;
+
+        // data/hora
+        const dateHourCell = newRow.insertCell(count);
+        const dateHourValue = document.createTextNode(dateInBr(data[i].data_hora));
+        dateHourCell.appendChild(dateHourValue);
+        count++;
+    }
+}
+
+const dateInBr = (dateInTimeStamp) => {
+    const date = new Date(dateInTimeStamp)
+    const year = `${(((date.getDate()) < 10 ? '0' : '') + (date.getDate()))}/${((date.getMonth() + 1) < 10 ? '0' + (date.getMonth() + 1) : (date.getMonth() + 1))}/${date.getFullYear()}`
+    const hours = `${date.getHours() < 10 ? ('0' + date.getHours()) : date.getHours()}:${date.getMinutes() < 10 ? ('0' + date.getMinutes()) : date.getMinutes()}:${date.getSeconds() < 10 ? ('0' + date.getSeconds()) : date.getSeconds()}`
+    return `${year} ${hours}`
 }
 
 function getConnectedServer(data) {

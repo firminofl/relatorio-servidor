@@ -1,4 +1,4 @@
-const { dateWithHours } = require("../../factory/date")
+const { dateWithHours, dateWithOutHours, dateWithOnlyHours } = require("../../factory/date")
 const { age } = require("../../services")
 
 async function mapValues(data) {
@@ -6,7 +6,7 @@ async function mapValues(data) {
     let unregistered = ['0 days 00:00:00']
 
     if (data.length == 1) {
-        const { rowCount, rows } = await age(dateWithHours(data[0].data_hora), `${dateWithHours(new Date())}`)
+        const { rowCount, rows } = await age(`${dateWithOutHours(data[0].data_hora)} 00:00:00`, `${dateWithOutHours(data[0].data_hora)} 23:59:59`)
 
         if (rowCount == 1) {
             if (data[0].status == 'REG')
@@ -35,7 +35,10 @@ async function mapValues(data) {
 
             }
         } else {
-            const { rowCount, rows } = await age(dateWithHours(data[data.length - 1].data_hora), `${dateWithHours(new Date())}`)
+            if (dateWithOutHours(data[data.length - 1].data_hora) == dateWithOutHours(new Date()))
+                var { rowCount, rows } = await age(dateWithHours(data[data.length - 1].data_hora), `${dateWithHours(new Date())}`)
+            else
+                var { rowCount, rows } = await age(dateWithHours(data[data.length - 1].data_hora), `${dateWithOutHours(data[data.length - 1].data_hora)} 23:59:59`)
 
             if (rowCount == 1) {
                 if (data[data.length - 1].status == 'REG')

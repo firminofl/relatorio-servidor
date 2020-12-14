@@ -6,7 +6,7 @@ require('dotenv').config()
 const app = express()
 
 const TIME = 60000 // intervalo de 1 minutos
-const REGISTRYHOUR = '00:01'
+const REGISTRYHOUR = '00:00'
 
 const monitoringAsterisk = require('./controllers/monitoring-asterisk')
 
